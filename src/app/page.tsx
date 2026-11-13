@@ -1,69 +1,59 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import { site, hero, capabilities, projects } from '@/content/site';
+import { Nav } from '@/components/sections/Nav';
+import { Hero } from '@/components/sections/Hero';
+import { Platform } from '@/components/sections/Platform';
+import { Patterns } from '@/components/sections/Patterns';
+import { Capabilities } from '@/components/sections/Capabilities';
+import { Experience } from '@/components/sections/Experience';
+import { Projects } from '@/components/sections/Projects';
+import { OpenSource } from '@/components/sections/OpenSource';
+import { Contact } from '@/components/sections/Contact';
+import { Background } from '@/components/client/Background';
+import { Terminal } from '@/components/client/Terminal';
+import { Motion } from '@/components/client/Motion';
+
+// Structured data: who this page is about, for search engines and AI answers.
+const jsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'ProfilePage',
+  url: site.url,
+  name: site.title,
+  description: site.description,
+  mainEntity: {
+    '@type': 'Person',
+    '@id': `${site.url}/#person`,
+    name: site.name,
+    url: site.url,
+    email: `mailto:${site.email}`,
+    jobTitle: site.jobTitle,
+    description: hero.lead,
+    worksFor: { '@type': 'Organization', name: site.employer },
+    address: { '@type': 'PostalAddress', addressLocality: site.location.city, addressCountry: site.location.countryCode },
+    alumniOf: { '@type': 'CollegeOrUniversity', name: 'Istanbul University' },
+    knowsLanguage: ['tr', 'en'],
+    knowsAbout: [...site.keywords.slice(3), ...capabilities.groups.map((g) => g.title), ...projects.items.map((p) => p.name)],
+    sameAs: [site.github, site.linkedin],
+  },
+};
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+    <>
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }} />
+      <Background />
+      <Terminal />
+      <Nav />
+      <main>
+        <Hero />
+        <Platform />
+        <Patterns />
+        <Capabilities />
+        <Experience />
+        <Projects />
+        <OpenSource />
+        <Contact />
       </main>
-    </div>
+      <Motion />
+    </>
   );
 }
