@@ -37,7 +37,13 @@ Create a file in `src/lib/bg/modes/` that exports a `ModeFactory`, register it i
 - `sitemap.xml`, `robots.txt`, web manifest.
 - Semantic, server-rendered HTML; animations only enhance it and respect `prefers-reduced-motion`.
 
-Set the production domain in `site.url` (`src/content/site.ts`).
+The public address comes from `NEXT_PUBLIC_SITE_URL`. On Vercel it falls back to the project's production `*.vercel.app` address, so canonical URLs, the sitemap and share cards are right without any setup. When you get a domain, add it in Vercel and set `NEXT_PUBLIC_SITE_URL=https://your-domain`.
+
+## Deploy (free)
+
+1. Sign in to [vercel.com](https://vercel.com) with GitHub and choose **Add New → Project**.
+2. Import `Emincmg/emin-portfolio`. The defaults (Next.js, `npm run build`) are correct.
+3. Deploy. Every push to `main` redeploys automatically.
 
 ## Résumé PDF
 

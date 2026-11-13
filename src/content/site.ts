@@ -1,7 +1,14 @@
 // All copy on the site lives here. Update the CV by editing this file only.
 
+// Public address of the site. Set NEXT_PUBLIC_SITE_URL once you own a domain; on Vercel the
+// project's production *.vercel.app address is used automatically until then.
+const siteUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_PROJECT_PRODUCTION_URL}` : 'http://localhost:3000')
+).replace(/\/$/, '');
+
 export const site = {
-  url: 'https://emincomoglu.com.tr',
+  url: siteUrl,
   name: 'Ali Emin Çomoğlu',
   shortName: 'AEÇ',
   jobTitle: 'Lead Developer',
