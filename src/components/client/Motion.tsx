@@ -149,7 +149,7 @@ export function Motion() {
           clearInterval(archFlow); clearInterval(archCi);
           if (s.isActive) { archFlow = setInterval(flow, 260); archCi = setInterval(ciFlow, 3200); ciFlow(); }
         } });
-        gsap.fromTo(prods, { opacity: 0, x: 30 }, { opacity: 1, x: 0, stagger: 0.05, duration: 0.8, ease: 'power3.out', scrollTrigger: { trigger: arch, start: 'top 70%' } });
+        gsap.fromTo(prods, { opacity: 0, x: '+=30' }, { opacity: 1, x: '-=30', stagger: 0.05, duration: 0.8, ease: 'power3.out', scrollTrigger: { trigger: arch, start: 'top 70%' } });
       }
       gsap.fromTo('.infra article', { '--fill': '0%' }, { '--fill': '100%', duration: 1.2, ease: 'power2.inOut', stagger: 0.15, scrollTrigger: { trigger: '.infra', start: 'top 85%' } });
 
