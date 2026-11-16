@@ -106,6 +106,53 @@ export function Motion() {
       };
       anchors.forEach((a) => a.addEventListener('click', onAnchor));
 
+      // CRT power-on: a bright flash rolls vertically, the screen goes black, then the picture
+      // warms up through static, slipping vertically a few times before it locks
+      let bootDelay = 0;
+      const boot = document.querySelector<HTMLElement>('.crt-boot');
+      const mainEl = document.querySelector<HTMLElement>('main');
+      if (boot && mainEl && getComputedStyle(boot).display !== 'none') {
+        boot.style.animation = 'none';
+        const flash = boot.querySelector<HTMLElement>('.crt-flash');
+        const noise = boot.querySelector<HTMLCanvasElement>('.crt-noise');
+        const nctx = noise?.getContext('2d');
+        const heavy = matchMedia('(min-width: 900px)').matches; // brightness/contrast filters only on desktop
+        let img: ImageData | null = nctx && noise ? nctx.createImageData(noise.width, noise.height) : null;
+        const drawNoise = () => {
+          if (!nctx || !img) return;
+          const d = img.data;
+          for (let i = 0; i < d.length; i += 4) { const v = Math.random() * 255; d[i] = v * 0.85; d[i + 1] = v; d[i + 2] = v; d[i + 3] = 255; }
+          nctx.putImageData(img, 0, 0);
+        };
+        gsap.ticker.add(drawNoise);
+        const done = () => {
+          gsap.ticker.remove(drawNoise);
+          img = null;
+          boot.remove();
+          gsap.set(mainEl, { clearProps: 'transform,filter,opacity,transformOrigin' });
+        };
+        const vh = innerHeight / 100;
+        const tl = gsap.timeline({ onComplete: done });
+        tl.set(mainEl, heavy ? { filter: 'contrast(0) brightness(0)' } : { opacity: 0 })
+          // 1. bright flash rolling up and down
+          .fromTo(flash, { opacity: 0, scaleX: 1, scaleY: 0.8, y: 0 }, { opacity: 1, y: 38 * vh, duration: 0.12, ease: 'power1.in' }, 0.15)
+          .set(flash, { y: -38 * vh })
+          .to(flash, { y: 30 * vh, scaleX: 1.3, scaleY: 0.6, duration: 0.16, ease: 'none' })
+          .to(flash, { opacity: 0, duration: 0.1 })
+          // 2. black, then static comes up
+          .to(noise, { opacity: 0.55, duration: 0.12 }, '-=0.04')
+          .set(boot, { backgroundColor: 'transparent' })
+          // 3. the picture warms up through the static
+          .to(mainEl, heavy ? { filter: 'contrast(1) brightness(1)', duration: 1.5, ease: 'power2.inOut' } : { opacity: 1, duration: 1.2, ease: 'power2.inOut' }, '<')
+          .to(noise, { opacity: 0, duration: 1.4, ease: 'power2.in' }, '<0.1')
+          // 4. vertical hold slips a few times before locking
+          .to(mainEl, { y: -18, duration: 0.05, ease: 'steps(1)' }, '<0.15')
+          .to(mainEl, { y: 11, duration: 0.05, ease: 'steps(1)' }, '+=0.12')
+          .to(mainEl, { y: -5, duration: 0.05, ease: 'steps(1)' }, '+=0.16')
+          .to(mainEl, { y: 0, duration: 0.05, ease: 'steps(1)' }, '+=0.12');
+        bootDelay = 1.1;
+      }
+
       // reading progress
       gsap.to('.progress i', { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: 0.3 } });
 
@@ -151,7 +198,7 @@ export function Motion() {
       // stats count up from zero
       gsap.utils.toArray<HTMLElement>('.stat b').forEach((b) => {
         const end = Number(b.textContent) || 0;
-        gsap.fromTo(b, { textContent: 0 }, { textContent: end, duration: 1.6, ease: 'power2.out', snap: { textContent: 1 }, delay: 0.9 });
+        gsap.fromTo(b, { textContent: 0 }, { textContent: end, duration: 1.6, ease: 'power2.out', snap: { textContent: 1 }, delay: 0.9 + bootDelay });
       });
 
       // contact headline: characters roll in like a wave
@@ -178,7 +225,7 @@ export function Motion() {
       }
 
       // hero
-      const intro = gsap.timeline();
+      const intro = gsap.timeline({ delay: bootDelay });
       document.querySelectorAll<HTMLElement>('.hero .scr').forEach((s, i) =>
         intro.fromTo(s, { textContent: '' }, { duration: 1.6, scrambleText: { text: original(s), chars: CHARS, revealDelay: 0.3, speed: 0.6 }, ease: 'none' }, i * 0.25));
       intro.fromTo('.hero .eyebrow, .hero .lead', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 1, stagger: 0.15, ease: 'power3.out' }, 0.4);
