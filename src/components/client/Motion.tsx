@@ -1,6 +1,5 @@
 'use client';
 
-import { useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
@@ -56,7 +55,6 @@ function buildGraph(gitlog: HTMLElement, svg: SVGSVGElement, paths: SVGPathEleme
 
 /** All scroll and intro animations, plus which background mode each section drives. */
 export function Motion() {
-  const cursor = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
     const timers: ReturnType<typeof setTimeout>[] = [];
@@ -106,18 +104,6 @@ export function Motion() {
         if (t) { e.preventDefault(); lenis.scrollTo(t as HTMLElement, { offset: -40, duration: 1.4 }); }
       };
       anchors.forEach((a) => a.addEventListener('click', onAnchor));
-
-      // cursor
-      const cur = cursor.current;
-      let offCursor = () => {};
-      if (cur && matchMedia('(pointer: fine)').matches) {
-        const cx = gsap.quickTo(cur, 'x', { duration: 0.25, ease: 'power3' }), cy = gsap.quickTo(cur, 'y', { duration: 0.25, ease: 'power3' });
-        const move = (e: PointerEvent) => { cur.style.opacity = '1'; cx(e.clientX); cy(e.clientY); };
-        const over = (e: PointerEvent) => cur.classList.toggle('big', !!(e.target as Element).closest?.('a, button'));
-        window.addEventListener('pointermove', move);
-        window.addEventListener('pointerover', over);
-        offCursor = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerover', over); };
-      }
 
       // hero
       const intro = gsap.timeline();
@@ -197,7 +183,6 @@ export function Motion() {
         lenis.destroy();
         gsap.ticker.remove(raf);
         anchors.forEach((a) => a.removeEventListener('click', onAnchor));
-        offCursor();
         diagIntervals.forEach(clearInterval);
         clearInterval(archFlow); clearInterval(archCi);
       };
@@ -233,5 +218,5 @@ export function Motion() {
     };
   });
 
-  return <div className="cursor" ref={cursor} aria-hidden="true" />;
+  return null;
 }

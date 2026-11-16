@@ -59,10 +59,6 @@ main { position: relative; z-index: 1; }
 .bghint { position: fixed; z-index: 30; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); font: 12px var(--mono); color: var(--muted); pointer-events: none; text-align: right; }
 @media (max-width: 760px) { .bghint { display: none; } }
 
-/* cursor */
-.cursor { position: fixed; left: 0; top: 0; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: var(--fg); mix-blend-mode: difference; pointer-events: none; z-index: 100; opacity: 0; transition: width .3s, height .3s, margin .3s; }
-.cursor.big { width: 64px; height: 64px; margin: -32px 0 0 -32px; }
-@media (pointer: coarse) { .cursor { display: none; } }
 
 /* nav */
 nav.top { position: fixed; top: 0; left: 0; right: 0; z-index: 40; padding-top: calc(18px + env(safe-area-inset-top, 0px)); padding-bottom: 18px; mix-blend-mode: difference; }

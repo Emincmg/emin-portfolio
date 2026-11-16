@@ -11,24 +11,24 @@ export const site = {
   url: siteUrl,
   name: 'Ali Emin Çomoğlu',
   shortName: 'AEÇ',
-  jobTitle: 'Lead Developer',
+  jobTitle: 'Software Engineer',
   employer: 'Blue Palm Operational',
   location: { city: 'Istanbul', country: 'Türkiye', countryCode: 'TR' },
   email: 'emin.comoglu96@gmail.com',
   copyrightYear: 2026,
   github: 'https://github.com/Emincmg',
   linkedin: 'https://www.linkedin.com/in/emin-%C3%A7omo%C4%9Flu-657213237/',
-  title: 'Ali Emin Çomoğlu — Lead Developer & Systems Architect',
+  title: 'Ali Emin Çomoğlu — Software Engineer',
   description:
-    'Lead Developer in Istanbul designing multi-tenant SaaS, event-driven backends, queues and concurrent systems, and the edge infrastructure that runs them. Laravel, NestJS, .NET and Rust.',
+    'Software engineer in Istanbul, leading a web team and designing multi-tenant SaaS, event-driven backends, queues and concurrent systems, and the edge infrastructure that runs them. Laravel, NestJS, .NET and Rust.',
   keywords: [
-    'Ali Emin Çomoğlu', 'Lead Developer', 'Software Architect', 'Systems Architecture', 'Multi-tenant SaaS', 'Event-driven architecture',
+    'Ali Emin Çomoğlu', 'Software Engineer', 'Lead Developer', 'Software Architect', 'Systems Architecture', 'Multi-tenant SaaS', 'Event-driven architecture',
     'CQRS', 'Onion Architecture', 'Laravel', 'NestJS', '.NET', 'Rust', 'Distributed systems', 'Istanbul', 'Backend engineer'
   ],
 };
 
 export const hero = {
-  eyebrow: 'Lead Developer · Istanbul',
+  eyebrow: 'Software Engineer · Istanbul',
   first: 'Ali Emin',
   last: 'Çomoğlu',
   roles: [

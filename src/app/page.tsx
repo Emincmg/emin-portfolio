@@ -31,7 +31,7 @@ const jsonLd = {
     address: { '@type': 'PostalAddress', addressLocality: site.location.city, addressCountry: site.location.countryCode },
     alumniOf: { '@type': 'CollegeOrUniversity', name: 'Istanbul University' },
     knowsLanguage: ['tr', 'en'],
-    knowsAbout: [...site.keywords.slice(3), ...capabilities.groups.map((g) => g.title), ...projects.items.map((p) => p.name)],
+    knowsAbout: [...site.keywords.slice(4), ...capabilities.groups.map((g) => g.title), ...projects.items.map((p) => p.name)],
     sameAs: [site.github, site.linkedin],
   },
 };
