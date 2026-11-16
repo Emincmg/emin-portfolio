@@ -11,6 +11,7 @@ import { Contact } from '@/components/sections/Contact';
 import { Background } from '@/components/client/Background';
 import { Terminal } from '@/components/client/Terminal';
 import { Motion } from '@/components/client/Motion';
+import { ConsoleEgg } from '@/components/client/ConsoleEgg';
 
 // Structured data: who this page is about, for search engines and AI answers.
 const jsonLd = {
@@ -54,6 +55,7 @@ export default function Home() {
         <Contact />
       </main>
       <Motion />
+      <ConsoleEgg />
       <div className="crt" aria-hidden="true"><i className="crt-mask" /><i className="crt-scan" /><i className="crt-roll" /><i className="crt-flicker" /></div>
       <div className="crt-boot" aria-hidden="true"><canvas className="crt-noise" width={240} height={135} /><i className="crt-flash" /></div>
     </>
