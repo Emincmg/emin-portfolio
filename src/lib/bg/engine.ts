@@ -29,9 +29,12 @@ export interface Mode {
 
 export type ModeFactory = (E: Engine) => Mode;
 
-type Listener = (state: { mode: string; auto: boolean }) => void;
-
-const MONO = '"JetBrains Mono", ui-monospace, Menlo, monospace';
+// next/font gives the face a generated family name; read it from the CSS variable so canvas text uses Roboto Mono too
+const monoFamily = () => {
+  const v = typeof document === 'undefined' ? '' : getComputedStyle(document.documentElement).getPropertyValue('--font-mono').trim();
+  return `${v ? v + ', ' : ''}ui-monospace, Menlo, monospace`;
+};
+let MONO = 'ui-monospace, Menlo, monospace';
 const UI_SELECTOR = 'a, button, input, textarea, select, label, .term, .diagram, .pdiag, .rolecard';
 
 export class BackgroundController {
@@ -43,26 +46,38 @@ export class BackgroundController {
   private current: Mode | null = null;
   private E: Engine;
   private raw = { x: -9999, y: -9999, last: 0 };
-  private listeners = new Set<Listener>();
   private raf = 0;
   private lastT = 0;
   private swapTimer: ReturnType<typeof setTimeout> | undefined;
   private pending: string | null = null;
   private cleanup: (() => void)[] = [];
+  private resizeObserver: ResizeObserver;
+  private dpr = Math.min(globalThis.devicePixelRatio || 1, 2);
 
+  /**
+   * The canvas lives inside the active stage and moves to the next stage when the section changes,
+   * so it scrolls natively with the page (no per-frame repositioning, no flicker on mobile Safari).
+   */
   constructor(private canvas: HTMLCanvasElement, factories: Record<string, ModeFactory>) {
     const ctx = canvas.getContext('2d');
     if (!ctx) throw new Error('2D canvas unavailable');
+    canvas.className = 'stage-canvas';
+    canvas.setAttribute('aria-hidden', 'true');
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    MONO = monoFamily();
     this.E = {
       ctx, W: 0, H: 0, mouse: { x: -9999, y: -9999, last: 0 }, reduced,
-      C: { accent: [140, 196, 214], warm: [224, 183, 122], bad: [224, 122, 106], fg: [233, 230, 223], muted: [141, 151, 163] },
+      C: { accent: [0, 229, 255], warm: [255, 43, 214], bad: [255, 59, 92], fg: [236, 233, 255], muted: [123, 118, 153] },
       rgba: (c, a) => `rgba(${c[0]},${c[1]},${c[2]},${a})`,
       lerp: (a, b, t) => a + (b - a) * t,
       text(str, x, y, color, size = 11, align = 'left') { ctx.font = `${size}px ${MONO}`; ctx.textAlign = align; ctx.fillStyle = color; ctx.fillText(str, x, y); },
       dot(x, y, r, color) { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); },
     };
     for (const [name, f] of Object.entries(factories)) this.modes[name] = f(this.E);
+    this.writeHints();
+
+    // size follows the stage, not the window: mobile address-bar resizes no longer clear the canvas
+    this.resizeObserver = new ResizeObserver(() => this.sizeCanvas());
 
     const on = <K extends keyof WindowEventMap>(type: K, fn: (e: WindowEventMap[K]) => void, opts?: AddEventListenerOptions) => {
       window.addEventListener(type, fn, opts);
@@ -70,10 +85,7 @@ export class BackgroundController {
     };
     on('pointermove', (e) => { this.raw.x = e.clientX; this.raw.y = e.clientY; this.raw.last = performance.now(); }, { passive: true });
     on('pointerdown', (e) => this.onPointerDown(e));
-    on('resize', () => this.sizeCanvas());
-    if (reduced) on('scroll', () => this.draw(0, performance.now()), { passive: true });
 
-    this.sizeCanvas();
     if (!reduced) {
       this.lastT = performance.now();
       const loop = (now: number) => {
@@ -89,27 +101,16 @@ export class BackgroundController {
   destroy() {
     cancelAnimationFrame(this.raf);
     clearTimeout(this.swapTimer);
+    this.resizeObserver.disconnect();
     this.cleanup.forEach((f) => f());
-    this.listeners.clear();
-  }
-
-  subscribe(fn: Listener) {
-    this.listeners.add(fn);
-    fn({ mode: this.mode ?? '', auto: this.auto });
-    return () => { this.listeners.delete(fn); };
+    this.canvas.remove();
   }
 
   /** Called as sections scroll into view; switches mode only while in auto. */
   section(mode: string, stage: HTMLElement | null) {
-    if (stage && stage !== this.stage) { this.stage = stage; if (this.E.reduced) this.renderOnce(); }
+    if (stage && stage !== this.stage) this.attach(stage);
     this.sectionMode = mode;
     if (this.auto) this.set(mode, true);
-  }
-
-  setAuto(on: boolean) {
-    this.auto = on;
-    this.emit();
-    if (on && this.sectionMode) this.set(this.sectionMode, true);
   }
 
   set(name: string, fromAuto = false): boolean {
@@ -119,44 +120,61 @@ export class BackgroundController {
     if (name === this.pending) return true; // already on its way in
     clearTimeout(this.swapTimer);
     this.pending = null;
-    if (name === this.mode) { this.canvas.style.opacity = '1'; this.emit(); return true; }
+    if (name === this.mode) { this.canvas.style.opacity = '1'; return true; }
     this.pending = name;
     const apply = () => {
       this.pending = null;
       this.mode = name;
       this.current = mode;
-      const r = this.stage?.getBoundingClientRect();
-      if (r) { this.E.W = Math.round(r.width); this.E.H = Math.round(r.height); }
       mode.init();
       this.canvas.style.opacity = '1';
-      this.emit();
       if (this.E.reduced) this.renderOnce();
     };
     if (!this.current || this.E.reduced) apply();
-    else { this.canvas.style.opacity = '0'; this.swapTimer = setTimeout(apply, 300); }
+    else { this.canvas.style.opacity = '0'; this.swapTimer = setTimeout(apply, 250); }
     return true;
   }
 
-  private emit() { this.listeners.forEach((f) => f({ mode: this.mode ?? '', auto: this.auto })); }
+  private attach(stage: HTMLElement) {
+    if (this.stage) this.resizeObserver.unobserve(this.stage);
+    this.stage = stage;
+    stage.appendChild(this.canvas);
+    this.resizeObserver.observe(stage);
+    this.sizeCanvas();
+  }
 
-  private box(): DOMRect | null {
-    if (!this.stage) return null;
-    const r = this.stage.getBoundingClientRect();
-    if (r.bottom < 0 || r.top > innerHeight || r.width < 40 || r.height < 40) return null;
-    return r;
+  /** Each stage's caption names its own drawing, so it reads right even before it is active. */
+  private writeHints() {
+    document.querySelectorAll<HTMLElement>('.bgstage').forEach((st) => {
+      const m = this.modes[st.dataset.bg ?? ''];
+      const hint = st.querySelector('.stage-hint');
+      if (m && hint) hint.textContent = `● ${m.label.toLowerCase()} — ${m.hint}`;
+    });
   }
 
   private sizeCanvas() {
-    const dpr = Math.min(devicePixelRatio || 1, 2);
-    this.canvas.width = innerWidth * dpr;
-    this.canvas.height = innerHeight * dpr;
+    if (!this.stage) return;
+    const w = this.stage.clientWidth, h = this.stage.clientHeight;
+    if (!w || !h) return;
+    const pw = Math.round(w * this.dpr), ph = Math.round(h * this.dpr);
+    if (this.canvas.width !== pw || this.canvas.height !== ph) { this.canvas.width = pw; this.canvas.height = ph; }
+    if (w !== this.E.W || h !== this.E.H) {
+      this.E.W = w; this.E.H = h;
+      if (this.current) { if (this.current.resize) this.current.resize(); else this.current.init(); }
+    }
     this.draw(0, performance.now());
+  }
+
+  private visibleRect(): DOMRect | null {
+    if (!this.stage) return null;
+    const r = this.stage.getBoundingClientRect();
+    return r.bottom < 0 || r.top > innerHeight ? null : r;
   }
 
   private onPointerDown(e: PointerEvent) {
     const target = e.target as Element | null;
     if (target?.closest?.(UI_SELECTOR) || !this.current?.click) return;
-    const r = this.box();
+    const r = this.visibleRect();
     if (!r) return;
     const x = e.clientX - r.left, y = e.clientY - r.top;
     if (x < -20 || y < -20 || x > r.width + 20 || y > r.height + 20) return;
@@ -165,30 +183,14 @@ export class BackgroundController {
   }
 
   private draw(dt: number, now: number) {
-    const { ctx } = this.E;
-    const dpr = Math.min(devicePixelRatio || 1, 2);
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.clearRect(0, 0, innerWidth, innerHeight);
-    const r = this.box();
     const mode = this.current;
-    if (!r || !mode) return;
-    const w = Math.round(r.width), h = Math.round(r.height);
-    if (w !== this.E.W || h !== this.E.H) { this.E.W = w; this.E.H = h; if (mode.resize) mode.resize(); else mode.init(); }
+    const r = this.visibleRect();
+    if (!mode || !r || !this.E.W) return; // off screen: keep the last frame, spend nothing
+    const { ctx } = this.E;
+    ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
+    ctx.clearRect(0, 0, this.E.W, this.E.H);
     this.E.mouse.x = this.raw.x - r.left; this.E.mouse.y = this.raw.y - r.top; this.E.mouse.last = this.raw.last;
-    ctx.save();
-    ctx.translate(r.left, r.top);
-    ctx.beginPath(); ctx.rect(0, 0, r.width, r.height); ctx.clip();
     try { mode.frame(dt, now); } catch (err) { console.error('[bg]', this.mode, err); }
-    ctx.restore();
-    // hint under the stage, wrapped to the stage width
-    ctx.font = `11px ${MONO}`; ctx.textAlign = 'left'; ctx.fillStyle = this.E.rgba(this.E.C.muted, 0.85);
-    const words = `● ${mode.label.toLowerCase()} — ${mode.hint}`.split(' ');
-    let line = '', y = r.bottom + 18;
-    for (const w of words) {
-      const test = line ? `${line} ${w}` : w;
-      if (ctx.measureText(test).width > r.width && line) { ctx.fillText(line, r.left, y); line = w; y += 15; } else line = test;
-    }
-    ctx.fillText(line, r.left, y);
   }
 
   private renderOnce() {

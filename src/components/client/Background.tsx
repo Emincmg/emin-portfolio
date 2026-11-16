@@ -1,15 +1,14 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { BackgroundController, setBackground } from '@/lib/bg/engine';
 import { MODES } from '@/lib/bg/modes';
 import { MOBILE_MODES } from '@/lib/bg/mobile';
 
 const NARROW = '(max-width: 899px)';
 
-/** Fixed canvas behind the page. Narrow screens get the touch-first mode set; Motion decides which section is active. */
+/** Creates the background engine. Narrow screens get the touch-first mode set; Motion decides which section is active. */
 export function Background() {
-  const canvas = useRef<HTMLCanvasElement>(null);
   const [narrow, setNarrow] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -21,8 +20,8 @@ export function Background() {
   }, []);
 
   useEffect(() => {
-    if (!canvas.current || narrow === null) return;
-    const c = new BackgroundController(canvas.current, narrow ? MOBILE_MODES : MODES);
+    if (narrow === null) return;
+    const c = new BackgroundController(document.createElement('canvas'), narrow ? MOBILE_MODES : MODES);
     setBackground(c);
     const stage = document.querySelector<HTMLElement>('.bgstage');
     c.section(stage?.dataset.bg ?? 'packets', stage);
@@ -31,5 +30,5 @@ export function Background() {
     return () => { c.destroy(); setBackground(null); };
   }, [narrow]);
 
-  return <canvas id="bg" ref={canvas} aria-hidden="true" />;
+  return null;
 }

@@ -8,15 +8,15 @@ export const contentType = 'image/png';
 export default function OpengraphImage() {
   return new ImageResponse(
     (
-      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 72, background: '#0d1116', color: '#e9e6df' }}>
-        <div style={{ display: 'flex', fontSize: 24, letterSpacing: 4, color: '#8cc4d6', textTransform: 'uppercase' }}>{hero.eyebrow}</div>
+      <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: 72, background: '#07060c', color: '#ece9ff' }}>
+        <div style={{ display: 'flex', fontSize: 24, letterSpacing: 4, color: '#00e5ff', textTransform: 'uppercase' }}>{hero.eyebrow}</div>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           <div style={{ fontSize: 120, fontWeight: 800, lineHeight: 0.95, letterSpacing: -5 }}>{hero.first}</div>
-          <div style={{ fontSize: 120, fontWeight: 800, lineHeight: 0.95, letterSpacing: -5, color: '#8cc4d6' }}>{hero.last}</div>
+          <div style={{ fontSize: 120, fontWeight: 800, lineHeight: 0.95, letterSpacing: -5, color: '#00e5ff' }}>{hero.last}</div>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: 28, color: '#cfccc5' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', fontSize: 28, color: '#bdb8da' }}>
           <div style={{ display: 'flex', maxWidth: 760 }}>Multi-tenant SaaS · event-driven systems · queues & concurrency · edge infrastructure</div>
-          <div style={{ display: 'flex', color: '#e0b77a' }}>{new URL(site.url).hostname}</div>
+          <div style={{ display: 'flex', color: '#ff2bd6' }}>{new URL(site.url).hostname}</div>
         </div>
       </div>
     ),

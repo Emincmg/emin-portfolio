@@ -7,7 +7,7 @@ export function Contact() {
       <div className="contact-grid">
         <div>
           <p className="eyebrow">{contact.eyebrow}</p>
-          <h2 className="big scr-on-view" id="contact-title">{contact.headline}</h2>
+          <h2 className="big" id="contact-title">{contact.headline}</h2>
           <div className="actions">
             <a className="btn primary" href={`mailto:${site.email}`}>{site.email}</a>
             <a className="btn" href="/resume.pdf">Download resume (PDF)</a>

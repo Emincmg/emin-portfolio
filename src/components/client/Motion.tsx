@@ -4,11 +4,12 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
 import { MotionPathPlugin } from 'gsap/MotionPathPlugin';
+import { SplitText } from 'gsap/SplitText';
 import { useGSAP } from '@gsap/react';
 import Lenis from 'lenis';
 import { getBackground } from '@/lib/bg/engine';
 
-gsap.registerPlugin(useGSAP, ScrollTrigger, ScrambleTextPlugin, MotionPathPlugin);
+gsap.registerPlugin(useGSAP, ScrollTrigger, ScrambleTextPlugin, MotionPathPlugin, SplitText);
 
 const CHARS = '01<>/{}[]#$%&*+=?';
 
@@ -105,6 +106,77 @@ export function Motion() {
       };
       anchors.forEach((a) => a.addEventListener('click', onAnchor));
 
+      // reading progress
+      gsap.to('.progress i', { scaleX: 1, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: 0.3 } });
+
+      // nav hides on the way down, returns on the way up
+      const nav = document.querySelector<HTMLElement>('nav.top');
+      if (nav) {
+        const hideNav = gsap.to(nav, { yPercent: -110, duration: 0.35, ease: 'power2.out', paused: true });
+        ScrollTrigger.create({ start: 120, end: 'max', onUpdate: (s) => { if (s.direction === 1) hideNav.play(); else hideNav.reverse(); }, onLeaveBack: () => hideNav.reverse() });
+      }
+
+      // nav indicator slides under the section in view
+      const ind = document.querySelector<HTMLElement>('.nav-ind');
+      if (ind) {
+        const moveTo = (id: string | null) => {
+          const link = id ? document.querySelector<HTMLElement>(`[data-nav="${id}"]`) : null;
+          if (!link) { gsap.to(ind, { opacity: 0, duration: 0.3 }); return; }
+          gsap.to(ind, { x: link.offsetLeft, width: link.offsetWidth, opacity: 1, duration: 0.5, ease: 'power3.out' });
+        };
+        ['platform', 'patterns', 'capabilities', 'experience', 'projects'].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) ScrollTrigger.create({ trigger: el, start: 'top 50%', end: 'bottom 50%', refreshPriority: -1, onToggle: (s) => { if (s.isActive) moveTo(id); } });
+        });
+        ScrollTrigger.create({ trigger: '.hero', start: 'top top', end: 'bottom 50%', onEnterBack: () => moveTo(null) });
+      }
+
+      // stage frames: corners settle in, the drawing opens from the centre
+      gsap.utils.toArray<HTMLElement>('.bgstage').forEach((st) => {
+        gsap.fromTo(st, { clipPath: 'inset(12% 12% 12% 12%)', opacity: 0.2 }, { clipPath: 'inset(-12px -12px -40px -12px)', opacity: 1, duration: 1.1, ease: 'expo.out', scrollTrigger: { trigger: st, start: 'top 85%', once: true } });
+      });
+
+      // paragraphs and list items rise line by line
+      const splits: SplitText[] = [];
+      const lineReveal = (targets: string, start = 'top 85%') => gsap.utils.toArray<HTMLElement>(targets).forEach((el) => {
+        if (!el.textContent?.trim()) return;
+        const sp = SplitText.create(el, { type: 'lines', mask: 'lines', linesClass: 'split-line' });
+        splits.push(sp);
+        if (!sp.lines.length) return;
+        gsap.fromTo(sp.lines, { yPercent: 105 }, { yPercent: 0, duration: 0.9, ease: 'power4.out', stagger: 0.06, scrollTrigger: { trigger: el, start, once: true } });
+      });
+      lineReveal('.hero .lead > p', 'top 95%');
+      lineReveal('.platform .intro p:not(.stage-hint), .projects .ptext > p, .rolecard p, .oss p');
+
+      // stats count up from zero
+      gsap.utils.toArray<HTMLElement>('.stat b').forEach((b) => {
+        const end = Number(b.textContent) || 0;
+        gsap.fromTo(b, { textContent: 0 }, { textContent: end, duration: 1.6, ease: 'power2.out', snap: { textContent: 1 }, delay: 0.9 });
+      });
+
+      // contact headline: characters roll in like a wave
+      const headline = document.querySelector<HTMLElement>('.contact .big');
+      if (headline) {
+        const sp = SplitText.create(headline, { type: 'words,chars' });
+        splits.push(sp);
+        gsap.fromTo(sp.chars, { yPercent: 110, rotate: 8, opacity: 0 }, { yPercent: 0, rotate: 0, opacity: 1, duration: 0.9, ease: 'back.out(1.6)', stagger: { each: 0.025, from: 'start' }, scrollTrigger: { trigger: headline, start: 'top 85%', once: true } });
+      }
+
+      // diagrams drift a little against the scroll
+      gsap.utils.toArray<HTMLElement>('.pdiag').forEach((fig) => gsap.fromTo(fig, { y: 40 }, { y: -40, ease: 'none', scrollTrigger: { trigger: fig, start: 'top bottom', end: 'bottom top', scrub: true } }));
+
+      // magnetic buttons on devices with a fine pointer
+      const offMagnet: (() => void)[] = [];
+      if (matchMedia('(pointer: fine)').matches) {
+        document.querySelectorAll<HTMLElement>('.btn').forEach((b) => {
+          const xTo = gsap.quickTo(b, 'x', { duration: 0.5, ease: 'power3' }), yTo = gsap.quickTo(b, 'y', { duration: 0.5, ease: 'power3' });
+          const move = (e: PointerEvent) => { const r = b.getBoundingClientRect(); xTo((e.clientX - r.left - r.width / 2) * 0.25); yTo((e.clientY - r.top - r.height / 2) * 0.35); };
+          const leave = () => { xTo(0); yTo(0); };
+          b.addEventListener('pointermove', move); b.addEventListener('pointerleave', leave);
+          offMagnet.push(() => { b.removeEventListener('pointermove', move); b.removeEventListener('pointerleave', leave); });
+        });
+      }
+
       // hero
       const intro = gsap.timeline();
       document.querySelectorAll<HTMLElement>('.hero .scr').forEach((s, i) =>
@@ -180,6 +252,8 @@ export function Motion() {
       });
 
       return () => {
+        splits.forEach((sp) => sp.revert());
+        offMagnet.forEach((f) => f());
         lenis.destroy();
         gsap.ticker.remove(raf);
         anchors.forEach((a) => a.removeEventListener('click', onAnchor));
