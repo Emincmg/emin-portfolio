@@ -43,19 +43,13 @@ main { position: relative; z-index: 1; }
 .contact-grid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 56px; align-items: center; }
 @media (max-width: 900px) {
   .sidegrid, .sidegrid.left, .contact-grid, .platform .intro { grid-template-columns: 1fr; }
-  .bgstage, .bgstage.sticky, .hero .bgstage { position: relative; top: 0; height: 320px; }
-  .sidegrid.left .bgstage { order: 0; }
-}
+  .bgstage, .bgstage.sticky, .hero .bgstage, .bgstage.band { position: relative; top: 0; height: 340px; margin-bottom: 50px; }
+  /* on phones the drawing sits right under the section title, not after a long column of text */
+  .sidegrid .bgstage, .sidegrid.left .bgstage { order: -1; }
+    }
 
 /* background canvas + mode switcher */
 #bg { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; display: block; pointer-events: none; transition: opacity .35s ease; }
-.bgctl { position: fixed; z-index: 30; left: max(16px, env(safe-area-inset-left, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); display: flex; align-items: center; gap: 6px; padding: 6px; background: rgba(20, 26, 33, .82); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line); border-radius: 999px; font: 500 12px var(--mono); max-width: calc(100vw - 32px); overflow-x: auto; scrollbar-width: none; }
-.bgctl::-webkit-scrollbar { display: none; }
-.bgctl button { font: inherit; color: var(--muted); background: none; border: 0; padding: 7px 11px; border-radius: 999px; cursor: pointer; white-space: nowrap; transition: color .2s, background .2s; }
-.bgctl button:hover { color: var(--fg); }
-.bgctl button[aria-pressed="true"] { background: var(--accent); color: var(--bg); }
-.bgctl button.live { color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
-.bgctl .sep { width: 1px; height: 18px; background: var(--line); flex: none; }
 .bghint { position: fixed; z-index: 30; right: max(16px, env(safe-area-inset-right, 0px)); bottom: calc(24px + env(safe-area-inset-bottom, 0px)); font: 12px var(--mono); color: var(--muted); pointer-events: none; text-align: right; }
 @media (max-width: 760px) { .bghint { display: none; } }
 

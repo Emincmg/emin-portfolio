@@ -32,7 +32,7 @@ export type ModeFactory = (E: Engine) => Mode;
 type Listener = (state: { mode: string; auto: boolean }) => void;
 
 const MONO = '"JetBrains Mono", ui-monospace, Menlo, monospace';
-const UI_SELECTOR = 'a, button, input, textarea, select, label, .term, .bgctl, .diagram, .pdiag, .rolecard';
+const UI_SELECTOR = 'a, button, input, textarea, select, label, .term, .diagram, .pdiag, .rolecard';
 
 export class BackgroundController {
   readonly modes: Record<string, Mode> = {};
@@ -180,8 +180,15 @@ export class BackgroundController {
     ctx.beginPath(); ctx.rect(0, 0, r.width, r.height); ctx.clip();
     try { mode.frame(dt, now); } catch (err) { console.error('[bg]', this.mode, err); }
     ctx.restore();
+    // hint under the stage, wrapped to the stage width
     ctx.font = `11px ${MONO}`; ctx.textAlign = 'left'; ctx.fillStyle = this.E.rgba(this.E.C.muted, 0.85);
-    ctx.fillText(`● ${mode.label.toLowerCase()} — ${mode.hint}`, r.left, r.bottom + 18);
+    const words = `● ${mode.label.toLowerCase()} — ${mode.hint}`.split(' ');
+    let line = '', y = r.bottom + 18;
+    for (const w of words) {
+      const test = line ? `${line} ${w}` : w;
+      if (ctx.measureText(test).width > r.width && line) { ctx.fillText(line, r.left, y); line = w; y += 15; } else line = test;
+    }
+    ctx.fillText(line, r.left, y);
   }
 
   private renderOnce() {

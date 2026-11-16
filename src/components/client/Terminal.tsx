@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getBackground } from '@/lib/bg/engine';
 import { site } from '@/content/site';
 import { onTerminalToggle } from './terminal-bus';
 
@@ -41,7 +40,7 @@ export function Terminal() {
   useEffect(() => { out.current?.scrollTo({ top: out.current.scrollHeight }); }, [lines]);
 
   const commands: Record<string, (args: string[]) => string[] | Promise<string[]>> = {
-    help: () => ['commands:', '  whoami · about · experience · stack', '  dig <domain> · curl -I <url> · ping <host> · traceroute <host>', '  bg list | bg auto | bg <mode>', '  contact · resume · clear · exit'],
+    help: () => ['commands:', '  whoami · about · experience · stack', '  dig <domain> · curl -I <url> · ping <host> · traceroute <host>', '  contact · resume · clear · exit'],
     whoami: () => [`${site.name} — ${site.jobTitle} @ ${site.employer}, ${site.location.city}`],
     about: () => ['I design the systems a company runs on: one platform, eight product families,', 'and a 5-person team that ships them with Scrum.'],
     experience: () => ['* a1f9e3c (HEAD -> main) present', '* 4e7b2d1 (tag: v3) Lead Developer — Mar 2025', '* 9c0d5a2 (tag: v2) Back-end Developer — Oct 2023', '* 2b8e6f0 (tag: v1) Freelance Software Developer — Aug 2022'],
@@ -80,14 +79,6 @@ export function Terminal() {
       let ms = 1;
       for (let i = 0; i < hops.length; i++) { await sleep(280); ms += 1 + Math.random() * 4; print(` ${i + 1}  ${hops[i]}  ${ms.toFixed(3)} ms  ${(ms + .3).toFixed(3)} ms  ${(ms + .6).toFixed(3)} ms`); }
       return [];
-    },
-    bg: (args) => {
-      const bg = getBackground();
-      if (!bg) return ['background engine unavailable'];
-      const modes = Object.keys(bg.modes);
-      if (!args[0] || args[0] === 'list') return ['modes: auto · ' + modes.join(' · '), `current: ${bg.mode}${bg.auto ? ' (auto)' : ''}`];
-      if (args[0] === 'auto') { bg.setAuto(true); return ['background → auto (follows the section)']; }
-      return bg.set(args[0]) ? [`background → ${args[0]}`] : [`unknown mode '${args[0]}'. try: ${modes.join(', ')}`];
     },
   };
 
